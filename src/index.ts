@@ -2,6 +2,7 @@ import { BaseLogger, ILogObjMeta, ISettingsParam, ILogObj, IMeta } from "./BaseL
 export { formatTemplate, styleWrap } from "./formatTemplate.js";
 export { ISettingsParam, BaseLogger, ILogObj, IMeta };
 export type {PrettyLogStyles} from "./prettyLogStyles.js";
+export type {TStyle} from "./interfaces.js";
 
 
 export class Logger<LogObj> extends BaseLogger<LogObj> {
