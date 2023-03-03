@@ -1,5 +1,5 @@
 {
-  "name": "tslog",
+  "name": "tslog-fork",
   "version": "4.8.0",
   "description": "📝 Extensible TypeScript Logger for Node.js and Browser: Dependency free, Fully customizable, Pretty errors, stack traces, and JSON output to attachable transports.",
   "author": "Eugene <opensource@terehov.de> (http://fullstack.build/)",
@@ -46,6 +46,7 @@
     "lint": "eslint --ext .js,.ts .",
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
     "test": "JEST_PUPPETEER_CONFIG=jest-puppeteer.config.cjs jest",
+    "test2": "jest --config jest-puppeteer.config.cjs",
     "test-puppeteer-serve": "npm run build-browser && node tests/Browser/server/index.cjs -p 4444",
     "coverage": "JEST_PUPPETEER_CONFIG=jest-puppeteer.config.cjs jest --coverage",
     "docsify-init": "docsify init ./docs",

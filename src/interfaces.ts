@@ -1,12 +1,13 @@
 import { IMeta, InspectOptions } from "./runtime/nodejs/index.js";
+import {PrettyLogStyles} from "./prettyLogStyles";
 export { IMeta, InspectOptions };
 
 export type TStyle =
   | null
-  | string
-  | string[]
+  | PrettyLogStyles
+  | PrettyLogStyles[]
   | {
-      [value: string]: null | string | string[];
+      [value: string]: null | PrettyLogStyles | PrettyLogStyles[];
     };
 
 export interface ISettingsParam<LogObj> {

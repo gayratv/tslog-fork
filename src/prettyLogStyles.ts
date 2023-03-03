@@ -1,4 +1,4 @@
-export const prettyLogStyles: { [name: string]: [number, number] } = {
+const prettyLogStylesSource = {
   // modifier
   reset: [0, 0],
   // 21 isn't widely supported and 22 does the same thing
@@ -51,3 +51,6 @@ export const prettyLogStyles: { [name: string]: [number, number] } = {
   bgCyanBright: [106, 49],
   bgWhiteBright: [107, 49],
 };
+
+export type PrettyLogStyles=keyof typeof prettyLogStylesSource;
+export const prettyLogStyles: { [name: string]: [number, number] } =prettyLogStylesSource as unknown as { [name: string]: [number, number] };

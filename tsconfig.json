@@ -16,5 +16,6 @@
     "allowSyntheticDefaultImports": true,
     "removeComments": true
   },
-  "exclude": ["node_modules", "**/node_modules", "**/dist", "**/tests", "*.test.ts"]
+  "exclude": ["node_modules", "**/node_modules", "**/dist", "**/tests", "*.test.ts"],
+  "include": ["src/**/*","examples/**/*"]
 }
