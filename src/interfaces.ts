@@ -64,6 +64,7 @@ export interface ISettingsParam<LogObj> {
     transportFormatted?: (logMetaMarkup: string, logArgs: unknown[], logErrors: string[], settings: ISettings<LogObj>) => void;
     transportJSON?: (json: unknown) => void;
   };
+  stackDepthLevel?: number // для определения позиции ошибки при вызове лога по умолчанию 5
 }
 
 export interface ISettings<LogObj> extends ISettingsParam<LogObj> {

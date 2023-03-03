@@ -7,7 +7,8 @@ export type {TStyle} from "./interfaces.js";
 
 export class Logger<LogObj> extends BaseLogger<LogObj> {
   constructor(settings?: ISettingsParam<LogObj>, logObj?: LogObj) {
-    super(settings, logObj, 5);
+    const stackDepthLevel=settings?.stackDepthLevel ??  5;
+    super(settings, logObj, stackDepthLevel);
   }
 
   /**
