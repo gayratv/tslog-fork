@@ -1,6 +1,6 @@
 {
   "name": "tslog-fork",
-  "version": "4.8.1",
+  "version": "4.8.8",
   "description": "📝 Extensible TypeScript Logger for Node.js and Browser: Dependency free, Fully customizable, Pretty errors, stack traces, and JSON output to attachable transports.",
   "author": "Eugene <opensource@terehov.de> (http://fullstack.build/)",
   "license": "MIT",
@@ -52,7 +52,8 @@
     "docsify-init": "docsify init ./docs",
     "docsify-serve": "cd docs && docsify serve",
     "pre-publish": "npm run build",
-    "release": "np --any-branch"
+    "release": "np --any-branch",
+    "publish": "npm publish "
   },
   "engines": {
     "node": ">=16"

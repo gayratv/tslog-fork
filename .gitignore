@@ -86,3 +86,4 @@ bower_components
 
 # Ignore banchmarks for now
 /benchmarks/*
+/log/

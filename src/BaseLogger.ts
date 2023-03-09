@@ -7,6 +7,7 @@ export * from "./interfaces.js";
 export class BaseLogger<LogObj> {
   private readonly runtime: "browser" | "nodejs" | "unknown";
   public settings: ISettings<LogObj>;
+  public loggerStartTime=new Date();
   // not needed yet
   //private subLoggers: BaseLogger<LogObj>[] = [];
 
@@ -322,6 +323,7 @@ export class BaseLogger<LogObj> {
 
     const placeholderValues = {};
 
+
     // date and time performance fix
     if (template.includes("{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}")) {
       template = template.replace("{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}", "{{dateIsoStr}}");
@@ -359,7 +361,8 @@ export class BaseLogger<LogObj> {
     placeholderValues["nameWithDelimiterPrefix"] =
       placeholderValues["name"].length > 0 ? this.settings.prettyErrorLoggerNameDelimiter + placeholderValues["name"] : "";
     placeholderValues["nameWithDelimiterSuffix"] =
-      placeholderValues["name"].length > 0 ? placeholderValues["name"] + this.settings.prettyErrorLoggerNameDelimiter : "";
+     placeholderValues["name"].length > 0 ? placeholderValues["name"] + this.settings.prettyErrorLoggerNameDelimiter : "";
+    placeholderValues["secDuration"] =Math.round ( ((new Date()).getTime()- this.loggerStartTime.getTime())/1000);
 
     return formatTemplate(this.settings, template, placeholderValues);
   }
