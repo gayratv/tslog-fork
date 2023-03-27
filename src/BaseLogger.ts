@@ -11,7 +11,7 @@ export class BaseLogger<LogObj> {
   // not needed yet
   //private subLoggers: BaseLogger<LogObj>[] = [];
 
-  constructor(settings?: ISettingsParam<LogObj>, private logObj?: LogObj, private stackDepthLevel: number = 4) {
+  constructor(settings?: ISettingsParam<LogObj>, private logObj?: LogObj, public stackDepthLevel: number = 4) {
     const isBrowser = ![typeof window, typeof document].includes("undefined");
     const isNode = Object.prototype.toString.call(typeof process !== "undefined" ? process : 0) === "[object process]";
     this.runtime = isBrowser ? "browser" : isNode ? "nodejs" : "unknown";
