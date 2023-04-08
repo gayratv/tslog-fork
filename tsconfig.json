@@ -17,5 +17,5 @@
     "removeComments": true
   },
   "exclude": ["node_modules", "**/node_modules", "**/dist", "**/tests", "*.test.ts"],
-  "include": ["src/**/*","examples/**/*"]
+  "include": ["src/**/*", "examples/**/*"]
 }

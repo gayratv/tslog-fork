@@ -1,10 +1,9 @@
-import { Logger, IMeta, formatTemplate } from '../src/index.js';
-
+import { Logger, IMeta, formatTemplate } from "../src/index.js";
 
 const logger = new Logger({
-  name: 'myLogger',
-  stylePrettyLogs:true,
-  type: 'pretty',
+  name: "myLogger",
+  stylePrettyLogs: true,
+  type: "pretty",
   overwrite: {
     formatMeta: (meta?: IMeta) => {
       // format LogObj meta object to a string and return it
@@ -23,7 +22,6 @@ const logger = new Logger({
   },
 });
 
-logger.info('asdasd');
-
+logger.info("asdasd");
 
 // const a=formatTemplate(logger.settings)

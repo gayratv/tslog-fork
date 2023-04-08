@@ -52,5 +52,5 @@ const prettyLogStylesSource = {
   bgWhiteBright: [107, 49],
 };
 
-export type PrettyLogStyles=keyof typeof prettyLogStylesSource;
-export const prettyLogStyles: { [name: string]: [number, number] } =prettyLogStylesSource as unknown as { [name: string]: [number, number] };
+export type PrettyLogStyles = keyof typeof prettyLogStylesSource;
+export const prettyLogStyles: { [name: string]: [number, number] } = prettyLogStylesSource as unknown as { [name: string]: [number, number] };

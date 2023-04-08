@@ -1,26 +1,45 @@
-import { getMeta, getErrorTrace, transportFormatted, transportJSON, prettyFormatLogObj, IMeta, isError, isBuffer } from "./runtime/nodejs/index.js";
-import { formatTemplate } from "./formatTemplate.js";
-import { formatNumberAddZeros } from "./formatNumberAddZeros.js";
-import { ISettingsParam, ISettings, ILogObjMeta, ILogObj, IErrorObject } from "./interfaces.js";
-export * from "./interfaces.js";
+import {
+  getMeta,
+  getErrorTrace,
+  transportFormatted,
+  transportJSON,
+  prettyFormatLogObj,
+  IMeta,
+  isError,
+  isBuffer,
+} from './runtime/nodejs/index.js';
+import { formatTemplate } from './formatTemplate.js';
+import { formatNumberAddZeros } from './formatNumberAddZeros.js';
+import { ISettingsParam, ISettings, ILogObjMeta, ILogObj, IErrorObject } from './interfaces.js';
+import { logFileTransport } from './file-transport.js';
+import path from 'node:path';
+export * from './interfaces.js';
 
 export class BaseLogger<LogObj> {
-  private readonly runtime: "browser" | "nodejs" | "unknown";
+  private readonly runtime: 'browser' | 'nodejs' | 'unknown';
   public settings: ISettings<LogObj>;
-  public loggerStartTime=new Date();
+  public loggerStartTime = new Date();
   // not needed yet
   //private subLoggers: BaseLogger<LogObj>[] = [];
 
-  constructor(settings?: ISettingsParam<LogObj>, private logObj?: LogObj, public stackDepthLevel: number = 4) {
-    const isBrowser = ![typeof window, typeof document].includes("undefined");
-    const isNode = Object.prototype.toString.call(typeof process !== "undefined" ? process : 0) === "[object process]";
-    this.runtime = isBrowser ? "browser" : isNode ? "nodejs" : "unknown";
-    const isBrowserBlinkEngine = isBrowser ? ((window?.["chrome"] || (window.Intl && Intl?.["v8BreakIterator"])) && "CSS" in window) != null : false;
+  // fileLogNameWithDir - директория и имя файла для лога
+  constructor(
+    settings?: ISettingsParam<LogObj>,
+    private logObj?: LogObj,
+    public stackDepthLevel: number = 4,
+    public fileLogNameWithDir = '',
+  ) {
+    const isBrowser = ![typeof window, typeof document].includes('undefined');
+    const isNode = Object.prototype.toString.call(typeof process !== 'undefined' ? process : 0) === '[object process]';
+    this.runtime = isBrowser ? 'browser' : isNode ? 'nodejs' : 'unknown';
+    const isBrowserBlinkEngine = isBrowser
+      ? ((window?.['chrome'] || (window.Intl && Intl?.['v8BreakIterator'])) && 'CSS' in window) != null
+      : false;
     const isSafari = isBrowser ? /^((?!chrome|android).)*safari/i.test(navigator.userAgent) : false;
     this.stackDepthLevel = isSafari ? 4 : this.stackDepthLevel;
 
     this.settings = {
-      type: settings?.type ?? "pretty",
+      type: settings?.type ?? 'pretty',
       name: settings?.name,
       parentNames: settings?.parentNames,
       minLevel: settings?.minLevel ?? 0,
@@ -28,41 +47,43 @@ export class BaseLogger<LogObj> {
       hideLogPositionForProduction: settings?.hideLogPositionForProduction ?? false,
       prettyLogTemplate:
         settings?.prettyLogTemplate ??
-        "{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}\t{{logLevelName}}\t{{filePathWithLine}}{{nameWithDelimiterPrefix}}\t",
-      prettyErrorTemplate: settings?.prettyErrorTemplate ?? "\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}",
-      prettyErrorStackTemplate: settings?.prettyErrorStackTemplate ?? "  • {{fileName}}\t{{method}}\n\t{{filePathWithLine}}",
-      prettyErrorParentNamesSeparator: settings?.prettyErrorParentNamesSeparator ?? ":",
-      prettyErrorLoggerNameDelimiter: settings?.prettyErrorLoggerNameDelimiter ?? "\t",
+        '{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}\t{{logLevelName}}\t{{filePathWithLine}}{{nameWithDelimiterPrefix}}\t',
+      prettyErrorTemplate:
+        settings?.prettyErrorTemplate ?? '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
+      prettyErrorStackTemplate:
+        settings?.prettyErrorStackTemplate ?? '  • {{fileName}}\t{{method}}\n\t{{filePathWithLine}}',
+      prettyErrorParentNamesSeparator: settings?.prettyErrorParentNamesSeparator ?? ':',
+      prettyErrorLoggerNameDelimiter: settings?.prettyErrorLoggerNameDelimiter ?? '\t',
       stylePrettyLogs: settings?.stylePrettyLogs ?? true,
-      prettyLogTimeZone: settings?.prettyLogTimeZone ?? "UTC",
+      prettyLogTimeZone: settings?.prettyLogTimeZone ?? 'UTC',
       prettyLogStyles: settings?.prettyLogStyles ?? {
         logLevelName: {
-          "*": ["bold", "black", "bgWhiteBright", "dim"],
-          SILLY: ["bold", "white"],
-          TRACE: ["bold", "whiteBright"],
-          DEBUG: ["bold", "green"],
-          INFO: ["bold", "blue"],
-          WARN: ["bold", "yellow"],
-          ERROR: ["bold", "red"],
-          FATAL: ["bold", "redBright"],
+          '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
+          SILLY: ['bold', 'white'],
+          TRACE: ['bold', 'whiteBright'],
+          DEBUG: ['bold', 'green'],
+          INFO: ['bold', 'blue'],
+          WARN: ['bold', 'yellow'],
+          ERROR: ['bold', 'red'],
+          FATAL: ['bold', 'redBright'],
         },
-        dateIsoStr: "white",
-        filePathWithLine: "white",
-        name: ["white", "bold"],
-        nameWithDelimiterPrefix: ["white", "bold"],
-        nameWithDelimiterSuffix: ["white", "bold"],
-        errorName: ["bold", "bgRedBright", "whiteBright"],
-        fileName: ["yellow"],
-        fileNameWithLine: "white",
+        dateIsoStr: 'white',
+        filePathWithLine: 'white',
+        name: ['white', 'bold'],
+        nameWithDelimiterPrefix: ['white', 'bold'],
+        nameWithDelimiterSuffix: ['white', 'bold'],
+        errorName: ['bold', 'bgRedBright', 'whiteBright'],
+        fileName: ['yellow'],
+        fileNameWithLine: 'white',
       },
       prettyInspectOptions: settings?.prettyInspectOptions ?? {
         colors: true,
         compact: false,
         depth: Infinity,
       },
-      metaProperty: settings?.metaProperty ?? "_meta",
-      maskPlaceholder: settings?.maskPlaceholder ?? "[***]",
-      maskValuesOfKeys: settings?.maskValuesOfKeys ?? ["password"],
+      metaProperty: settings?.metaProperty ?? '_meta',
+      maskPlaceholder: settings?.maskPlaceholder ?? '[***]',
+      maskValuesOfKeys: settings?.maskValuesOfKeys ?? ['password'],
       maskValuesOfKeysCaseInsensitive: settings?.maskValuesOfKeysCaseInsensitive ?? false,
       maskValuesRegEx: settings?.maskValuesRegEx,
       prefix: [...(settings?.prefix ?? [])],
@@ -79,7 +100,8 @@ export class BaseLogger<LogObj> {
     };
 
     // style only for server and blink browsers
-    this.settings.stylePrettyLogs = this.settings.stylePrettyLogs && isBrowser && !isBrowserBlinkEngine ? false : this.settings.stylePrettyLogs;
+    this.settings.stylePrettyLogs =
+      this.settings.stylePrettyLogs && isBrowser && !isBrowserBlinkEngine ? false : this.settings.stylePrettyLogs;
   }
 
   /**
@@ -101,9 +123,12 @@ export class BaseLogger<LogObj> {
         ? this._mask(logArgs)
         : logArgs;
     // execute default LogObj functions for every log (e.g. requestId)
-    const thisLogObj: LogObj | undefined = this.logObj != null ? this._recursiveCloneAndExecuteFunctions(this.logObj) : undefined;
+    const thisLogObj: LogObj | undefined =
+      this.logObj != null ? this._recursiveCloneAndExecuteFunctions(this.logObj) : undefined;
     const logObj: LogObj =
-      this.settings.overwrite?.toLogObj != null ? this.settings.overwrite?.toLogObj(maskedArgs, thisLogObj) : this._toLogObj(maskedArgs, thisLogObj);
+      this.settings.overwrite?.toLogObj != null
+        ? this.settings.overwrite?.toLogObj(maskedArgs, thisLogObj)
+        : this._toLogObj(maskedArgs, thisLogObj);
     const logObjWithMeta: LogObj & ILogObjMeta =
       this.settings.overwrite?.addMeta != null
         ? this.settings.overwrite?.addMeta(logObj, logLevelId, logLevelName)
@@ -119,20 +144,25 @@ export class BaseLogger<LogObj> {
       logArgsAndErrorsMarkup = this.settings.overwrite?.formatLogObj(maskedArgs, this.settings);
     }
 
-    if (this.settings.type === "pretty") {
+    if (this.settings.type === 'pretty') {
       logMetaMarkup = logMetaMarkup ?? this._prettyFormatLogObjMeta(logObjWithMeta?.[this.settings.metaProperty]);
       logArgsAndErrorsMarkup = logArgsAndErrorsMarkup ?? prettyFormatLogObj(maskedArgs, this.settings);
     }
 
     if (logMetaMarkup != null && logArgsAndErrorsMarkup != null) {
       this.settings.overwrite?.transportFormatted != null
-        ? this.settings.overwrite?.transportFormatted(logMetaMarkup, logArgsAndErrorsMarkup.args, logArgsAndErrorsMarkup.errors, this.settings)
+        ? this.settings.overwrite?.transportFormatted(
+            logMetaMarkup,
+            logArgsAndErrorsMarkup.args,
+            logArgsAndErrorsMarkup.errors,
+            this.settings,
+          )
         : transportFormatted(logMetaMarkup, logArgsAndErrorsMarkup.args, logArgsAndErrorsMarkup.errors, this.settings);
     } else {
       // overwrite transport no matter what, hide only with default transport
       this.settings.overwrite?.transportJSON != null
         ? this.settings.overwrite?.transportJSON(logObjWithMeta)
-        : this.settings.type !== "hidden"
+        : this.settings.type !== 'hidden'
         ? transportJSON(logObjWithMeta)
         : undefined;
     }
@@ -153,6 +183,17 @@ export class BaseLogger<LogObj> {
    */
   public attachTransport(transportLogger: (transportLogger: LogObj & ILogObjMeta) => void): void {
     this.settings.attachedTransports.push(transportLogger);
+  }
+
+  /**
+   *  Attaches File Loggers
+   *
+   * @param fileLogDirWithName - directory and file name relative to process.cwd()
+   */
+  public attachFileTransport(fileLogDirWithName: string): void {
+    this.fileLogNameWithDir = path.resolve(process.cwd(), fileLogDirWithName);
+    const bindLogFunc = logFileTransport.bind(this, this.fileLogNameWithDir);
+    this.attachTransport(bindLogFunc);
   }
 
   /**
@@ -179,7 +220,7 @@ export class BaseLogger<LogObj> {
     const subLogger: BaseLogger<LogObj> = new (this.constructor as new (
       subLoggerSettings?: ISettingsParam<LogObj>,
       logObj?: LogObj,
-      stackDepthLevel?: number
+      stackDepthLevel?: number,
     ) => this)(subLoggerSettings, logObj ?? this.logObj, this.stackDepthLevel);
     //this.subLoggers.push(subLogger);
     return subLogger;
@@ -187,7 +228,9 @@ export class BaseLogger<LogObj> {
 
   private _mask(args: unknown[]): unknown[] {
     const maskValuesOfKeys =
-      this.settings.maskValuesOfKeysCaseInsensitive !== true ? this.settings.maskValuesOfKeys : this.settings.maskValuesOfKeys.map((key) => key.toLowerCase());
+      this.settings.maskValuesOfKeysCaseInsensitive !== true
+        ? this.settings.maskValuesOfKeys
+        : this.settings.maskValuesOfKeys.map((key) => key.toLowerCase());
     return args?.map((arg) => {
       return this._recursiveCloneAndMaskValuesOfKeys(arg, maskValuesOfKeys);
     });
@@ -197,7 +240,7 @@ export class BaseLogger<LogObj> {
     if (seen.includes(source)) {
       return { ...source };
     }
-    if (typeof source === "object" && source != null) {
+    if (typeof source === 'object' && source != null) {
       seen.push(source);
     }
 
@@ -219,7 +262,7 @@ export class BaseLogger<LogObj> {
             : this._recursiveCloneAndMaskValuesOfKeys((source as { [key: string]: unknown })[prop], keys, seen);
           return o;
         }, this._cloneError(source as Error))
-      : source != null && typeof source === "object"
+      : source != null && typeof source === 'object'
       ? Object.getOwnPropertyNames(source).reduce((o, prop) => {
           // mask
           o[prop] = keys.includes(this.settings?.maskValuesOfKeysCaseInsensitive !== true ? prop : prop.toLowerCase())
@@ -240,7 +283,7 @@ export class BaseLogger<LogObj> {
     if (seen.includes(source)) {
       return { ...source };
     }
-    if (typeof source === "object") {
+    if (typeof source === 'object') {
       seen.push(source);
     }
 
@@ -248,12 +291,14 @@ export class BaseLogger<LogObj> {
       ? source.map((item) => this._recursiveCloneAndExecuteFunctions(item, seen))
       : source instanceof Date
       ? new Date(source.getTime())
-      : source && typeof source === "object"
+      : source && typeof source === 'object'
       ? Object.getOwnPropertyNames(source).reduce((o, prop) => {
           Object.defineProperty(o, prop, Object.getOwnPropertyDescriptor(source, prop) as PropertyDescriptor);
           // execute functions or clone
           o[prop] =
-            typeof source[prop] === "function" ? source[prop]() : this._recursiveCloneAndExecuteFunctions((source as { [key: string]: unknown })[prop], seen);
+            typeof source[prop] === 'function'
+              ? source[prop]()
+              : this._recursiveCloneAndExecuteFunctions((source as { [key: string]: unknown })[prop], seen);
           return o;
         }, Object.create(Object.getPrototypeOf(source)))
       : (source as T);
@@ -263,7 +308,10 @@ export class BaseLogger<LogObj> {
     args = args?.map((arg) => (isError(arg) ? this._toErrorObject(arg as Error) : arg));
     if (this.settings.argumentsArrayName == null) {
       if (args.length === 1 && !Array.isArray(args[0]) && isBuffer(args[0]) !== true && !(args[0] instanceof Date)) {
-        clonedLogObj = typeof args[0] === "object" && args[0] != null ? { ...args[0], ...clonedLogObj } : { 0: args[0], ...clonedLogObj };
+        clonedLogObj =
+          typeof args[0] === 'object' && args[0] != null
+            ? { ...args[0], ...clonedLogObj }
+            : { 0: args[0], ...clonedLogObj };
       } else {
         clonedLogObj = { ...clonedLogObj, ...args };
       }
@@ -294,7 +342,7 @@ export class BaseLogger<LogObj> {
   private _toErrorObject(error: Error): IErrorObject {
     return {
       nativeError: error,
-      name: error.name ?? "Error",
+      name: error.name ?? 'Error',
       message: error.message,
       stack: getErrorTrace(error),
     };
@@ -309,60 +357,69 @@ export class BaseLogger<LogObj> {
         this.stackDepthLevel,
         this.settings.hideLogPositionForProduction,
         this.settings.name,
-        this.settings.parentNames
+        this.settings.parentNames,
       ),
     };
   }
 
-  private _prettyFormatLogObjMeta(logObjMeta?: IMeta): string {
+  public _prettyFormatLogObjMeta(logObjMeta?: IMeta): string {
     if (logObjMeta == null) {
-      return "";
+      return '';
     }
 
     let template = this.settings.prettyLogTemplate;
 
     const placeholderValues = {};
 
-
     // date and time performance fix
-    if (template.includes("{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}")) {
-      template = template.replace("{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}", "{{dateIsoStr}}");
+    if (template.includes('{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}')) {
+      template = template.replace('{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}', '{{dateIsoStr}}');
     } else {
-      if (this.settings.prettyLogTimeZone === "UTC") {
-        placeholderValues["yyyy"] = logObjMeta?.date?.getUTCFullYear() ?? "----";
-        placeholderValues["mm"] = formatNumberAddZeros(logObjMeta?.date?.getUTCMonth(), 2, 1);
-        placeholderValues["dd"] = formatNumberAddZeros(logObjMeta?.date?.getUTCDate(), 2);
-        placeholderValues["hh"] = formatNumberAddZeros(logObjMeta?.date?.getUTCHours(), 2);
-        placeholderValues["MM"] = formatNumberAddZeros(logObjMeta?.date?.getUTCMinutes(), 2);
-        placeholderValues["ss"] = formatNumberAddZeros(logObjMeta?.date?.getUTCSeconds(), 2);
-        placeholderValues["ms"] = formatNumberAddZeros(logObjMeta?.date?.getUTCMilliseconds(), 3);
+      if (this.settings.prettyLogTimeZone === 'UTC') {
+        placeholderValues['yyyy'] = logObjMeta?.date?.getUTCFullYear() ?? '----';
+        placeholderValues['mm'] = formatNumberAddZeros(logObjMeta?.date?.getUTCMonth(), 2, 1);
+        placeholderValues['dd'] = formatNumberAddZeros(logObjMeta?.date?.getUTCDate(), 2);
+        placeholderValues['hh'] = formatNumberAddZeros(logObjMeta?.date?.getUTCHours(), 2);
+        placeholderValues['MM'] = formatNumberAddZeros(logObjMeta?.date?.getUTCMinutes(), 2);
+        placeholderValues['ss'] = formatNumberAddZeros(logObjMeta?.date?.getUTCSeconds(), 2);
+        placeholderValues['ms'] = formatNumberAddZeros(logObjMeta?.date?.getUTCMilliseconds(), 3);
       } else {
-        placeholderValues["yyyy"] = logObjMeta?.date?.getFullYear() ?? "----";
-        placeholderValues["mm"] = formatNumberAddZeros(logObjMeta?.date?.getMonth(), 2, 1);
-        placeholderValues["dd"] = formatNumberAddZeros(logObjMeta?.date?.getDate(), 2);
-        placeholderValues["hh"] = formatNumberAddZeros(logObjMeta?.date?.getHours(), 2);
-        placeholderValues["MM"] = formatNumberAddZeros(logObjMeta?.date?.getMinutes(), 2);
-        placeholderValues["ss"] = formatNumberAddZeros(logObjMeta?.date?.getSeconds(), 2);
-        placeholderValues["ms"] = formatNumberAddZeros(logObjMeta?.date?.getMilliseconds(), 3);
+        placeholderValues['yyyy'] = logObjMeta?.date?.getFullYear() ?? '----';
+        placeholderValues['mm'] = formatNumberAddZeros(logObjMeta?.date?.getMonth(), 2, 1);
+        placeholderValues['dd'] = formatNumberAddZeros(logObjMeta?.date?.getDate(), 2);
+        placeholderValues['hh'] = formatNumberAddZeros(logObjMeta?.date?.getHours(), 2);
+        placeholderValues['MM'] = formatNumberAddZeros(logObjMeta?.date?.getMinutes(), 2);
+        placeholderValues['ss'] = formatNumberAddZeros(logObjMeta?.date?.getSeconds(), 2);
+        placeholderValues['ms'] = formatNumberAddZeros(logObjMeta?.date?.getMilliseconds(), 3);
       }
     }
     const dateInSettingsTimeZone =
-      this.settings.prettyLogTimeZone === "UTC" ? logObjMeta?.date : new Date(logObjMeta?.date?.getTime() - logObjMeta?.date?.getTimezoneOffset() * 60000);
-    placeholderValues["rawIsoStr"] = dateInSettingsTimeZone?.toISOString();
-    placeholderValues["dateIsoStr"] = dateInSettingsTimeZone?.toISOString().replace("T", " ").replace("Z", "");
-    placeholderValues["logLevelName"] = logObjMeta?.logLevelName;
-    placeholderValues["fileNameWithLine"] = logObjMeta?.path?.fileNameWithLine ?? "";
-    placeholderValues["filePathWithLine"] = logObjMeta?.path?.filePathWithLine ?? "";
-    placeholderValues["fullFilePath"] = logObjMeta?.path?.fullFilePath ?? "";
+      this.settings.prettyLogTimeZone === 'UTC'
+        ? logObjMeta?.date
+        : new Date(logObjMeta?.date?.getTime() - logObjMeta?.date?.getTimezoneOffset() * 60000);
+    placeholderValues['rawIsoStr'] = dateInSettingsTimeZone?.toISOString();
+    placeholderValues['dateIsoStr'] = dateInSettingsTimeZone?.toISOString().replace('T', ' ').replace('Z', '');
+    placeholderValues['logLevelName'] = logObjMeta?.logLevelName;
+    placeholderValues['fileNameWithLine'] = logObjMeta?.path?.fileNameWithLine ?? '';
+    placeholderValues['filePathWithLine'] = logObjMeta?.path?.filePathWithLine ?? '';
+    placeholderValues['fullFilePath'] = logObjMeta?.path?.fullFilePath ?? '';
     // name
     let parentNamesString = this.settings.parentNames?.join(this.settings.prettyErrorParentNamesSeparator);
-    parentNamesString = parentNamesString != null && logObjMeta?.name != null ? parentNamesString + this.settings.prettyErrorParentNamesSeparator : undefined;
-    placeholderValues["name"] = logObjMeta?.name != null || parentNamesString != null ? (parentNamesString ?? "") + logObjMeta?.name ?? "" : "";
-    placeholderValues["nameWithDelimiterPrefix"] =
-      placeholderValues["name"].length > 0 ? this.settings.prettyErrorLoggerNameDelimiter + placeholderValues["name"] : "";
-    placeholderValues["nameWithDelimiterSuffix"] =
-     placeholderValues["name"].length > 0 ? placeholderValues["name"] + this.settings.prettyErrorLoggerNameDelimiter : "";
-    placeholderValues["secDuration"] =Math.round ( ((new Date()).getTime()- this.loggerStartTime.getTime())/1000);
+    parentNamesString =
+      parentNamesString != null && logObjMeta?.name != null
+        ? parentNamesString + this.settings.prettyErrorParentNamesSeparator
+        : undefined;
+    placeholderValues['name'] =
+      logObjMeta?.name != null || parentNamesString != null ? (parentNamesString ?? '') + logObjMeta?.name ?? '' : '';
+    placeholderValues['nameWithDelimiterPrefix'] =
+      placeholderValues['name'].length > 0
+        ? this.settings.prettyErrorLoggerNameDelimiter + placeholderValues['name']
+        : '';
+    placeholderValues['nameWithDelimiterSuffix'] =
+      placeholderValues['name'].length > 0
+        ? placeholderValues['name'] + this.settings.prettyErrorLoggerNameDelimiter
+        : '';
+    placeholderValues['secDuration'] = Math.round((new Date().getTime() - this.loggerStartTime.getTime()) / 1000);
 
     return formatTemplate(this.settings, template, placeholderValues);
   }

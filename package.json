@@ -1,6 +1,6 @@
 {
   "name": "tslog-fork",
-  "version": "4.8.12",
+  "version": "4.8.19",
   "description": "📝 Extensible TypeScript Logger for Node.js and Browser: Dependency free, Fully customizable, Pretty errors, stack traces, and JSON output to attachable transports.",
   "author": "Eugene <opensource@terehov.de> (http://fullstack.build/)",
   "license": "MIT",
@@ -33,7 +33,8 @@
     }
   },
   "scripts": {
-    "build": "npm run build-types && npm run build-server && npm run build-browser",
+    "build": "npm run build-types && npm run build-server ",
+    "build-original": "npm run build-types && npm run build-server && npm run build-browser",
     "build-browser": "node build.js",
     "build-types": "tsc -b tsconfig.types.json",
     "build-server": "tsc -b tsconfig.esm.json tsconfig.cjs.json && cp-cli ./src/package-cjs.json ./dist/cjs/package.json",
@@ -50,7 +51,7 @@
     "coverage": "JEST_PUPPETEER_CONFIG=jest-puppeteer.config.cjs jest --coverage",
     "docsify-init": "docsify init ./docs",
     "docsify-serve": "cd docs && docsify serve",
-    "pre-publish": "npm run build",
+    "pre-publish--": "npm run build",
     "release": "np --any-branch",
     "publish": "npm publish "
   },
@@ -93,15 +94,16 @@
     "esbuild": "^0.15.15",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "jest": "^28.1.3",
     "jest-puppeteer": "^6.2.0",
     "nodemon": "^2.0.19",
-    "prettier": "^2.7.1",
+    "prettier": "^2.8.7",
     "puppeteer": "^17.1.0",
     "ts-jest": "^28.0.8",
     "ts-jest-resolver": "^2.0.0",
     "ts-node": "^10.9.1",
-    "typescript": "^4.7.4"
+    "typescript": "^4.9.5"
   },
   "sideEffects": false,
   "keywords": [
@@ -136,5 +138,8 @@
     "pretty json",
     "pretty-error",
     "sourcemap"
-  ]
+  ],
+  "dependencies": {
+    "dayjs": "^1.11.7"
+  }
 }

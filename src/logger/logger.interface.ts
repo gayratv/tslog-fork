@@ -1,4 +1,4 @@
-import { TStyle, styleWrap as styleWrapSrc, Logger } from 'tslog-fork';
+import { TStyle } from '../index.js';
 
 export enum LoggerLevel {
   silly,

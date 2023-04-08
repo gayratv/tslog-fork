@@ -1,13 +1,17 @@
-import { BaseLogger, ILogObjMeta, ISettingsParam, ILogObj, IMeta } from "./BaseLogger.js";
-export { formatTemplate, styleWrap } from "./formatTemplate.js";
+import { BaseLogger, ILogObjMeta, ISettingsParam, ILogObj, IMeta } from './BaseLogger.js';
+export { formatTemplate, styleWrap } from './formatTemplate.js';
 export { ISettingsParam, BaseLogger, ILogObj, IMeta };
-export type {PrettyLogStyles} from "./prettyLogStyles.js";
-export type {TStyle} from "./interfaces.js";
+export type { PrettyLogStyles } from './prettyLogStyles.js';
+export type { TStyle } from './interfaces.js';
 
+export type { ILogger } from './logger/logger.interface.js';
+export { LoggerLevel } from './logger/logger.interface.js';
+// необязательная реализация логера
+export { NLog, SimpleLog } from './logger/logger.implementation.js';
 
 export class Logger<LogObj> extends BaseLogger<LogObj> {
   constructor(settings?: ISettingsParam<LogObj>, logObj?: LogObj) {
-    const stackDepthLevel=settings?.stackDepthLevel ??  5;
+    const stackDepthLevel = settings?.stackDepthLevel ?? 5;
     super(settings, logObj, stackDepthLevel);
   }
 
@@ -17,7 +21,11 @@ export class Logger<LogObj> extends BaseLogger<LogObj> {
    * @param logLevelName  - Log level name e.g. silly
    * @param args          - Multiple log attributes that should be logged out.
    */
-  public log(logLevelId: number, logLevelName: string, ...args: unknown[]): (LogObj & ILogObjMeta & ILogObj) | undefined {
+  public log(
+    logLevelId: number,
+    logLevelName: string,
+    ...args: unknown[]
+  ): (LogObj & ILogObjMeta & ILogObj) | undefined {
     return super.log(logLevelId, logLevelName, ...args);
   }
 
@@ -26,7 +34,7 @@ export class Logger<LogObj> extends BaseLogger<LogObj> {
    * @param args  - Multiple log attributes that should be logged out.
    */
   public silly(...args: unknown[]): (LogObj & ILogObjMeta) | undefined {
-    return super.log(0, "SILLY", ...args);
+    return super.log(0, 'SILLY', ...args);
   }
 
   /**
@@ -34,7 +42,7 @@ export class Logger<LogObj> extends BaseLogger<LogObj> {
    * @param args  - Multiple log attributes that should be logged out.
    */
   public trace(...args: unknown[]): (LogObj & ILogObjMeta) | undefined {
-    return super.log(1, "TRACE", ...args);
+    return super.log(1, 'TRACE', ...args);
   }
 
   /**
@@ -42,7 +50,7 @@ export class Logger<LogObj> extends BaseLogger<LogObj> {
    * @param args  - Multiple log attributes that should be logged out.
    */
   public debug(...args: unknown[]): (LogObj & ILogObjMeta) | undefined {
-    return super.log(2, "DEBUG", ...args);
+    return super.log(2, 'DEBUG', ...args);
   }
 
   /**
@@ -50,7 +58,7 @@ export class Logger<LogObj> extends BaseLogger<LogObj> {
    * @param args  - Multiple log attributes that should be logged out.
    */
   public info(...args: unknown[]): (LogObj & ILogObjMeta) | undefined {
-    return super.log(3, "INFO", ...args);
+    return super.log(3, 'INFO', ...args);
   }
 
   /**
@@ -58,7 +66,7 @@ export class Logger<LogObj> extends BaseLogger<LogObj> {
    * @param args  - Multiple log attributes that should be logged out.
    */
   public warn(...args: unknown[]): (LogObj & ILogObjMeta) | undefined {
-    return super.log(4, "WARN", ...args);
+    return super.log(4, 'WARN', ...args);
   }
 
   /**
@@ -66,7 +74,7 @@ export class Logger<LogObj> extends BaseLogger<LogObj> {
    * @param args  - Multiple log attributes that should be logged out.
    */
   public error(...args: unknown[]): (LogObj & ILogObjMeta) | undefined {
-    return super.log(5, "ERROR", ...args);
+    return super.log(5, 'ERROR', ...args);
   }
 
   /**
@@ -74,7 +82,7 @@ export class Logger<LogObj> extends BaseLogger<LogObj> {
    * @param args  - Multiple log attributes that should be logged out.
    */
   public fatal(...args: unknown[]): (LogObj & ILogObjMeta) | undefined {
-    return super.log(6, "FATAL", ...args);
+    return super.log(6, 'FATAL', ...args);
   }
 
   /**

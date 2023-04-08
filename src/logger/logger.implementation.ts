@@ -1,22 +1,13 @@
-import { TStyle, styleWrap as styleWrapSrc, Logger } from '../../src/index.js';
-import { ILogger } from './logger.interface.js';
+import { TStyle, styleWrap as styleWrapSrc, Logger } from '../index.js';
+import { ILogger, LoggerLevel } from './logger.interface.js';
 
-// singleton
-export class NLog implements ILogger {
+export class SimpleLog implements ILogger {
   public logger: Logger<any>;
-  private static instance: NLog;
-
-  public static getInstance(): NLog {
-    if (!NLog.instance) {
-      NLog.instance = new NLog();
-    }
-
-    return NLog.instance;
-  }
-  private constructor() {
+  constructor() {
     this.logger = new Logger<any>({ stackDepthLevel: 6 });
-    // this.logger = new Logger<any>();
     this.logger.settings.stylePrettyLogs = true;
+    this.logger.settings.prettyLogTimeZone = 'local';
+    this.logger.settings.prettyInspectOptions = { colors: true, compact: true, sorted: false };
     this.logger.settings.prettyLogStyles = {
       logLevelName: {
         '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
@@ -37,13 +28,14 @@ export class NLog implements ILogger {
       fileName: ['yellow'],
       fileNameWithLine: 'white',
     };
-    this.logger.settings.prettyLogTemplate = '{{hh}}:{{MM}}:{{ss}} {{logLevelName}} [{{fileNameWithLine}}] ';
+    this.logger.settings.prettyLogTemplate =
+      '{{hh}}:{{MM}}:{{ss}} {{logLevelName}} [{{fileNameWithLine}}] {{secDuration}} ';
   }
   log(logLevel: number, ...args: unknown[]) {
     this.logger.log(logLevel, '', ...args);
   }
   silly(...args: unknown[]) {
-    this.logger.silly(...args);
+    this.logger.log(LoggerLevel.silly, '', ...args);
   }
   trace(...args: unknown[]) {
     this.logger.trace(...args);
@@ -72,5 +64,21 @@ export class NLog implements ILogger {
   }
   get minLevel() {
     return this.logger.settings.minLevel;
+  }
+}
+
+// singleton
+export class NLog extends SimpleLog implements ILogger {
+  private static instance: NLog;
+
+  public static getInstance(): NLog {
+    if (!NLog.instance) {
+      NLog.instance = new NLog();
+    }
+
+    return NLog.instance;
+  }
+  private constructor() {
+    super();
   }
 }
